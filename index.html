@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gestion de Produits Électriques</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    .tab { cursor: pointer; margin-right: 10px; display: inline-block; padding: 5px 10px; border: 1px solid #ccc; }
+    .tab.active { background: #ddd; font-weight: bold; }
+    table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; }
+    input, button { margin: 5px 0; }
+  </style>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<h2>Connexion</h2>
+<div id="login">
+  Nom : <input type="text" id="username"><br>
+  Mot de passe : <input type="password" id="password"><br>
+  <button onclick="login()">Se connecter</button>
+</div>
+
+<div id="main" class="hidden">
+  <div>
+    <span class="tab active" onclick="showPage('ajout')">Ajout de Modèles</span>
+    <span class="tab" onclick="showPage('recherche')">Recherche et Liste</span>
+  </div>
+
+  <!-- Page Ajout -->
+  <div id="ajout">
+    <h2>Ajouter un modèle électrique</h2>
+    Modèle : <input type="text" id="modele"><br>
+    Série : <input type="text" id="serie"><br>
+    Tension (V) : <input type="number" id="tension"><br>
+    Puissance (W) : <input type="number" id="puissance"><br>
+    Ampérage (A) : <input type="number" id="amperage"><br>
+    <button onclick="ajouterModele()">Ajouter</button>
+    <button onclick="viderTous()">Supprimer tous</button>
+    <button onclick="telechargerCSV()">Télécharger</button>
+  </div>
+
+  <!-- Page Recherche -->
+  <div id="recherche" class="hidden">
+    <h2>Recherche de modèles</h2>
+    <input type="text" id="search" placeholder="Recherche par modèle, série, etc." oninput="afficherListe()"><br>
+    <button onclick="telechargerCSV()">Télécharger la liste filtrée</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Modèle</th><th>Série</th><th>Tension</th><th>Puissance</th><th>Ampérage</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="listeProduits"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB4xdsYWbjm8sw6Yu7czceQAmrCZFJ5l9o",
+    authDomain: "gpmgs-687dc.firebaseapp.com",
+    databaseURL: "https://gpmgs-687dc-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "gpmgs-687dc",
+    storageBucket: "gpmgs-687dc.appspot.com",
+    messagingSenderId: "385639490412",
+    appId: "1:385639490412:web:1cba209823f5e14dfd0949",
+    measurementId: "G-1GL42TH29M"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const correctUser = "admin", correctPass = "admin1342";
+  let produits = [];
+
+  function login() {
+    const u = document.getElementById("username").value;
+    const p = document.getElementById("password").value;
+    if (u === correctUser && p === correctPass) {
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("main").classList.remove("hidden");
+      chargerProduits();
+    } else {
+      alert("Identifiants incorrects !");
+    }
+  }
+
+  function showPage(page) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#ajout, #recherche').forEach(d => d.classList.add('hidden'));
+    document.querySelector(`.tab[onclick="showPage('${page}')"]`).classList.add('active');
+    document.getElementById(page).classList.remove('hidden');
+    if (page === "recherche") afficherListe();
+  }
+
+  function ajouterModele() {
+    const m = {
+      modele: document.getElementById("modele").value,
+      serie: document.getElementById("serie").value,
+      tension: parseFloat(document.getElementById("tension").value),
+      puissance: parseFloat(document.getElementById("puissance").value),
+      amperage: parseFloat(document.getElementById("amperage").value)
+    };
+    produits.push(m);
+    sauvegarder();
+    afficherListe();
+    alert("Modèle ajouté !");
+  }
+
+  function supprimer(index) {
+    if (confirm("Supprimer ce modèle ?")) {
+      produits.splice(index, 1);
+      sauvegarder();
+      afficherListe();
+    }
+  }
+
+  function viderTous() {
+    if (confirm("Supprimer tous les modèles ?")) {
+      produits = [];
+      sauvegarder();
+      afficherListe();
+    }
+  }
+
+  function sauvegarder() {
+    db.ref("produits").set(produits);
+  }
+
+  function chargerProduits() {
+    db.ref("produits").once("value").then(snap => {
+      produits = snap.val() || [];
+      afficherListe();
+    });
+  }
+
+  function afficherListe() {
+    const q = document.getElementById("search").value.toLowerCase();
+    const tbody = document.getElementById("listeProduits");
+    tbody.innerHTML = "";
+    produits.forEach((p, i) => {
+      const texte = `${p.modele} ${p.serie} ${p.tension} ${p.puissance} ${p.amperage}`.toLowerCase();
+      if (!q || texte.includes(q)) {
+        tbody.innerHTML += `<tr>
+          <td>${p.modele}</td><td>${p.serie}</td><td>${p.tension}</td><td>${p.puissance}</td><td>${p.amperage}</td>
+          <td><button onclick="supprimer(${i})">Supprimer</button></td>
+        </tr>`;
+      }
+    });
+  }
+
+  function telechargerCSV() {
+    let csv = "Modèle,Série,Tension,Puissance,Ampérage\n";
+    const q = document.getElementById("search").value.toLowerCase();
+    produits.forEach(p => {
+      const texte = `${p.modele} ${p.serie} ${p.tension} ${p.puissance} ${p.amperage}`.toLowerCase();
+      if (!q || texte.includes(q)) {
+        csv += `${p.modele},${p.serie},${p.tension},${p.puissance},${p.amperage}\n`;
+      }
+    });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "produits_electriques.csv";
+    a.click();
+  }
+</script>
+
+</body>
+</html>
