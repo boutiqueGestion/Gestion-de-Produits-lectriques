@@ -45,9 +45,9 @@
     <h2>Recherche de modèles</h2>
     <input type="text" id="searchModele" placeholder="Modèle" oninput="afficherListe()">
     <input type="text" id="searchSerie" placeholder="Série" oninput="afficherListe()">
-    <input type="number" id="searchTension" placeholder="Tension" oninput="afficherListe()">
-    <input type="number" id="searchPuissance" placeholder="Puissance" oninput="afficherListe()">
-    <input type="number" id="searchAmperage" placeholder="Ampérage" oninput="afficherListe()"><br>
+    <input type="number" id="searchTension" placeholder="Tension ≥" oninput="afficherListe()">
+    <input type="number" id="searchPuissance" placeholder="Puissance ≥" oninput="afficherListe()">
+    <input type="number" id="searchAmperage" placeholder="Ampérage ≥" oninput="afficherListe()"><br>
     <button onclick="telechargerCSV()">Télécharger la liste filtrée</button>
     <table>
       <thead>
@@ -151,9 +151,9 @@
       if (
         (!qModele || p.modele.toLowerCase().includes(qModele)) &&
         (!qSerie || p.serie.toLowerCase().includes(qSerie)) &&
-        (!qTension || p.tension.toString() === qTension) &&
-        (!qPuissance || p.puissance.toString() === qPuissance) &&
-        (!qAmperage || p.amperage.toString() === qAmperage)
+        (!qTension || p.tension >= parseFloat(qTension)) &&
+        (!qPuissance || p.puissance >= parseFloat(qPuissance)) &&
+        (!qAmperage || p.amperage >= parseFloat(qAmperage))
       ) {
         tbody.innerHTML += `<tr>
           <td>${p.modele}</td><td>${p.serie}</td><td>${p.tension}</td><td>${p.puissance}</td><td>${p.amperage}</td>
@@ -175,9 +175,9 @@
       if (
         (!qModele || p.modele.toLowerCase().includes(qModele)) &&
         (!qSerie || p.serie.toLowerCase().includes(qSerie)) &&
-        (!qTension || p.tension.toString() === qTension) &&
-        (!qPuissance || p.puissance.toString() === qPuissance) &&
-        (!qAmperage || p.amperage.toString() === qAmperage)
+        (!qTension || p.tension >= parseFloat(qTension)) &&
+        (!qPuissance || p.puissance >= parseFloat(qPuissance)) &&
+        (!qAmperage || p.amperage >= parseFloat(qAmperage))
       ) {
         csv += `${p.modele},${p.serie},${p.tension},${p.puissance},${p.amperage}\n`;
       }
