@@ -9,9 +9,8 @@
     .tab { cursor: pointer; margin-right: 10px; display: inline-block; padding: 5px 10px; border: 1px solid #ccc; }
     .tab.active { background: #ddd; font-weight: bold; }
     table, th, td { border: 1px solid black; border-collapse: collapse; padding: 5px; }
-    input, button { margin: 5px 0; }
+    input, button { margin: 5px 5px 5px 0; }
   </style>
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
@@ -30,7 +29,6 @@
     <span class="tab" onclick="showPage('recherche')">Recherche et Liste</span>
   </div>
 
-  <!-- Page Ajout -->
   <div id="ajout">
     <h2>Ajouter un modèle électrique</h2>
     Modèle : <input type="text" id="modele"><br>
@@ -43,10 +41,13 @@
     <button onclick="telechargerCSV()">Télécharger</button>
   </div>
 
-  <!-- Page Recherche -->
   <div id="recherche" class="hidden">
     <h2>Recherche de modèles</h2>
-    <input type="text" id="search" placeholder="Recherche par modèle, série, etc." oninput="afficherListe()"><br>
+    <input type="text" id="searchModele" placeholder="Modèle" oninput="afficherListe()">
+    <input type="text" id="searchSerie" placeholder="Série" oninput="afficherListe()">
+    <input type="number" id="searchTension" placeholder="Tension" oninput="afficherListe()">
+    <input type="number" id="searchPuissance" placeholder="Puissance" oninput="afficherListe()">
+    <input type="number" id="searchAmperage" placeholder="Ampérage" oninput="afficherListe()"><br>
     <button onclick="telechargerCSV()">Télécharger la liste filtrée</button>
     <table>
       <thead>
@@ -138,12 +139,22 @@
   }
 
   function afficherListe() {
-    const q = document.getElementById("search").value.toLowerCase();
+    const qModele = document.getElementById("searchModele").value.toLowerCase();
+    const qSerie = document.getElementById("searchSerie").value.toLowerCase();
+    const qTension = document.getElementById("searchTension").value;
+    const qPuissance = document.getElementById("searchPuissance").value;
+    const qAmperage = document.getElementById("searchAmperage").value;
     const tbody = document.getElementById("listeProduits");
     tbody.innerHTML = "";
+
     produits.forEach((p, i) => {
-      const texte = `${p.modele} ${p.serie} ${p.tension} ${p.puissance} ${p.amperage}`.toLowerCase();
-      if (!q || texte.includes(q)) {
+      if (
+        (!qModele || p.modele.toLowerCase().includes(qModele)) &&
+        (!qSerie || p.serie.toLowerCase().includes(qSerie)) &&
+        (!qTension || p.tension.toString() === qTension) &&
+        (!qPuissance || p.puissance.toString() === qPuissance) &&
+        (!qAmperage || p.amperage.toString() === qAmperage)
+      ) {
         tbody.innerHTML += `<tr>
           <td>${p.modele}</td><td>${p.serie}</td><td>${p.tension}</td><td>${p.puissance}</td><td>${p.amperage}</td>
           <td><button onclick="supprimer(${i})">Supprimer</button></td>
@@ -153,14 +164,25 @@
   }
 
   function telechargerCSV() {
+    const qModele = document.getElementById("searchModele").value.toLowerCase();
+    const qSerie = document.getElementById("searchSerie").value.toLowerCase();
+    const qTension = document.getElementById("searchTension").value;
+    const qPuissance = document.getElementById("searchPuissance").value;
+    const qAmperage = document.getElementById("searchAmperage").value;
+
     let csv = "Modèle,Série,Tension,Puissance,Ampérage\n";
-    const q = document.getElementById("search").value.toLowerCase();
     produits.forEach(p => {
-      const texte = `${p.modele} ${p.serie} ${p.tension} ${p.puissance} ${p.amperage}`.toLowerCase();
-      if (!q || texte.includes(q)) {
+      if (
+        (!qModele || p.modele.toLowerCase().includes(qModele)) &&
+        (!qSerie || p.serie.toLowerCase().includes(qSerie)) &&
+        (!qTension || p.tension.toString() === qTension) &&
+        (!qPuissance || p.puissance.toString() === qPuissance) &&
+        (!qAmperage || p.amperage.toString() === qAmperage)
+      ) {
         csv += `${p.modele},${p.serie},${p.tension},${p.puissance},${p.amperage}\n`;
       }
     });
+
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
